@@ -144,8 +144,24 @@ if uploaded_file:
                 # 如果模型决定调用工具
                 if message.get("tool_calls"):
                     tool_call = message["tool_calls"][0]
-                    arguments = json.loads(tool_call["function"]["arguments"])
-                    code = arguments["code"]
+
+                    # 🌟 核心修复：加入容错机制
+                    try:
+                        arguments = json.loads(tool_call["function"]["arguments"])
+                        code = arguments.get("code", "")
+                    except json.JSONDecodeError as e:
+                        # 如果大模型输出了错误的 JSON 格式
+                        st.warning(f"⚠️ JSON 解析失败，正在要求 AI 重新生成格式。")
+
+                        # 把错误信息作为 Observation 喂回给大模型，逼它重写
+                        messages.append(message)
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tool_call["id"],
+                            "content": f"JSONDecodeError: The arguments you provided are not valid JSON. Please ensure you output STRICT valid JSON without markdown formatting. Error details: {e}"
+                        })
+                        iteration += 1
+                        continue  # 直接跳过本次执行，进入下一轮循环让它重新生成
 
                     st.markdown(f"**🔧 Iteration {iteration + 1} - Executing Code:**")
                     st.code(code, language="python")

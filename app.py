@@ -132,12 +132,19 @@ if uploaded_file:
             status_placeholder.write("🧠 Thinking and analyzing...")
 
             while iteration < max_iterations:
-                response = dashscope.Generation.call(
-                    model="qwen-plus",
-                    messages=messages,
-                    tools=tools,
-                    result_format="message"
-                )
+
+                # 🌟 修复 2：加入网络请求的容错保护
+                try:
+                    response = dashscope.Generation.call(
+                        model="qwen-plus",
+                        messages=messages,
+                        tools=tools,
+                        result_format="message"
+                    )
+                except Exception as api_error:
+                    st.error(f"🔌 网络连接异常或 API 接口超时，请稍后再试。\n错误详情: {api_error}")
+                    status_placeholder.empty()
+                    break  # 网络断了就直接终止本次分析，避免死循环
 
                 message = response.output.choices[0].message
 
@@ -149,6 +156,8 @@ if uploaded_file:
                     try:
                         arguments = json.loads(tool_call["function"]["arguments"])
                         code = arguments.get("code", "")
+                        # 🌟 修复 1：把字面上的 \n 替换成真正的代码换行
+                        code = code.replace('\\n', '\n')
                     except json.JSONDecodeError as e:
                         # 如果大模型输出了错误的 JSON 格式
                         st.warning(f"⚠️ JSON 解析失败，正在要求 AI 重新生成格式。")

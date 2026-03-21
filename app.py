@@ -39,7 +39,19 @@ with st.sidebar:
 uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
 
 if uploaded_file:
-    df = pd.read_csv(uploaded_file)
+    # 🌟 修复 3：兼容中文 GBK 与国际 UTF-8 编码
+    try:
+        # 优先尝试标准 UTF-8 读取
+        df = pd.read_csv(uploaded_file, encoding='utf-8')
+    except UnicodeDecodeError:
+        try:
+            # 如果报错，说明可能是国内的 GBK 编码。
+            # 必须先把文件指针拨回开头，否则读出来是空的
+            uploaded_file.seek(0)
+            df = pd.read_csv(uploaded_file, encoding='gbk')
+        except Exception as e:
+            st.error(f"❌ 文件读取彻底失败，请检查文件格式。错误信息：{e}")
+            st.stop() # 停止运行后续代码
 
     with st.expander("Preview of Data", expanded=False):
         st.dataframe(df.head())

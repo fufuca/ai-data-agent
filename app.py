@@ -1,5 +1,6 @@
 import os
 import json
+import ast
 import dashscope
 import streamlit as st
 import pandas as pd
@@ -180,6 +181,17 @@ if uploaded_file:
                             code = code[:-3]
 
                         code = code.strip()  # 再次清理头尾空格和多余的换行
+                        # 🌟 2. 终极防线：AST 智能语法预检
+                        try:
+                            ast.parse(code)  # 探针 1：尝试直接编译
+                        except SyntaxError:
+                            # 如果大模型又抽风输出了连在一起的字面量 \n，这里会拦截到 SyntaxError
+                            fixed_code = code.replace('\\n', '\n')
+                            try:
+                                ast.parse(fixed_code)  # 探针 2：验证替换后是否变成合法代码
+                                code = fixed_code  # 验证成功！使用修复后的代码
+                            except SyntaxError:
+                                pass  # 如果替换后还错，说明大模型写了死逻辑，放行给 exec 报错并反馈给它自我修复
                     except json.JSONDecodeError as e:
                         # 如果大模型输出了错误的 JSON 格式
                         st.warning(f"⚠️ JSON 解析失败，正在要求 AI 重新生成格式。")

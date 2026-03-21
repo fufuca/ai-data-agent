@@ -169,8 +169,17 @@ if uploaded_file:
                     try:
                         arguments = json.loads(tool_call["function"]["arguments"])
                         code = arguments.get("code", "")
-                        # 🌟 修复 1：把字面上的 \n 替换成真正的代码换行
-                        code = code.replace('\\n', '\n')
+                        # 🌟 新增一个智能净化器，专门剥离 Markdown 外衣
+                        # 因为大模型有时候会在 JSON 里悄悄塞入 ```python ... ```
+                        code = code.strip()
+                        if code.startswith("```python"):
+                            code = code[9:]
+                        elif code.startswith("```"):
+                            code = code[3:]
+                        if code.endswith("```"):
+                            code = code[:-3]
+
+                        code = code.strip()  # 再次清理头尾空格和多余的换行
                     except json.JSONDecodeError as e:
                         # 如果大模型输出了错误的 JSON 格式
                         st.warning(f"⚠️ JSON 解析失败，正在要求 AI 重新生成格式。")

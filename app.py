@@ -117,6 +117,7 @@ if uploaded_file:
         5. 绘图规范：必须使用 `matplotlib` 绘图。**千万不要**在代码中使用 `plt.show()`，系统会自动捕获当前活跃的图表。
         6. 逐步推理：每次只编写和执行一个逻辑步骤的代码。通过 `print()` 观察结果后，再决定下一步操作。
         7. 纯中文交互：在思考过程、代码注释以及最终的分析结果中，请始终使用流畅、专业的中文与用户交流。
+        8. STRING FORMATTING (CRITICAL): If you need to print text with newlines or write multi-line queries, YOU MUST ALWAYS use Python's triple quotes (`\"\"\"` or `'''`). NEVER use single or double quotes for strings that span multiple lines or contain `\\n`. 
         """
 
         # ----------------------------------------------------
